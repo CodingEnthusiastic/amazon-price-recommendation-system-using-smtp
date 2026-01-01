@@ -63,7 +63,7 @@ function ProductList() {
 
   const handleToggleActive = async (product) => {
     try {
-      await updateProduct(product.id, { isActive: !product.is_active });
+      await updateProduct(product._id, { isActive: !product.is_active });
       toast.success(product.is_active ? 'Tracking paused' : 'Tracking resumed');
       fetchProducts();
     } catch (error) {
@@ -145,13 +145,13 @@ function ProductList() {
         ) : (
           <div className="products-grid">
             {products.map((product) => (
-              <div key={product.id} className={`product-card card ${!product.is_active ? 'inactive' : ''}`}>
+              <div key={product._id} className={`product-card card ${!product.is_active ? 'inactive' : ''}`}>
                 <div className="product-header">
                   <h3>{product.product_name || 'Unknown Product'}</h3>
                   <div className="header-actions">
                     <button
                       className="icon-btn"
-                      onClick={() => handleRefreshProduct(product.id)}
+                      onClick={() => handleRefreshProduct(product._id)}
                       title="Refresh product data"
                     >
                       <FaSyncAlt />
@@ -196,7 +196,7 @@ function ProductList() {
                   </a>
                   <button
                     className="btn btn-danger btn-small"
-                    onClick={() => handleDeleteProduct(product.id)}
+                    onClick={() => handleDeleteProduct(product._id)}
                   >
                     <FaTrash /> Delete
                   </button>
