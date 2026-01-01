@@ -9,6 +9,9 @@ const { initScheduler } = require('./services/scheduler');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// Trust proxy - Required for Render and other hosting platforms
+app.set('trust proxy', 1);
+
 // Security middleware
 app.use(helmet());
 

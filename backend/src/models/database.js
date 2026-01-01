@@ -1,7 +1,20 @@
 const Database = require('better-sqlite3');
 const path = require('path');
+const fs = require('fs');
 
-const dbPath = path.join(__dirname, '../../database.db');
+// Use persistent disk on Render, or local path in development
+// Render persistent disk is mounted at /opt/render/project/.data
+const isProd = process.env.NODE_ENV === 'production';
+const dataDir = isProd && process.env.RENDER ? '/opt/render/project/.data' : path.join(__dirname, '../..');
+
+// Create data directory if it doesn't exist
+if (!fs.existsSync(dataDir)) {
+  fs.mkdirSync(dataDir, { recursive: true });
+}
+
+const dbPath = path.join(dataDir, 'database.db');
+console.log('📁 Database path:', dbPath);
+
 const db = new Database(dbPath);
 
 // Enable foreign keys
