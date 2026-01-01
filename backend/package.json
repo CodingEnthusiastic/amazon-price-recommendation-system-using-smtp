@@ -6,7 +6,9 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
-    "init-db": "node src/models/init.js"
+    "build": "npm install",
+    "init-db": "node src/models/init.js",
+    "test": "echo \"No tests specified\" && exit 0"
   },
   "keywords": [
     "amazon",
