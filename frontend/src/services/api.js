@@ -65,5 +65,6 @@ export const addProduct = (data) => api.post('/api/products', data);
 export const updateProduct = (id, data) => api.put(`/api/products/${id}`, data);
 export const deleteProduct = (id) => api.delete(`/api/products/${id}`);
 export const getPriceHistory = (id) => api.get(`/api/products/${id}/history`);
+export const refreshProduct = (id) => api.post(`/api/products/${id}/refresh`);
 
 export default api;

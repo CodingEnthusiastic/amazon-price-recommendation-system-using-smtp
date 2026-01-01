@@ -21,4 +21,7 @@ router.delete('/:id', productController.deleteProduct);
 // GET /api/products/:id/history - Get price history
 router.get('/:id/history', productController.getPriceHistory);
 
+// POST /api/products/:id/refresh - Manually refresh product data
+router.post('/:id/refresh', productController.refreshProduct);
+
 module.exports = router;

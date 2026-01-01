@@ -77,16 +77,31 @@ async function scrapeAmazonPrice(url) {
       throw new Error('Invalid price value: ' + price);
     }
 
-    // Extract title
-    let title = $('#productTitle').text().trim();
-    if (!title) {
-      title = $('h1.a-size-large').text().trim();
+    // Extract title with multiple fallbacks
+    let title = null;
+    const titleSelectors = [
+      '#productTitle',
+      'h1#title',
+      'span#productTitle',
+      'h1.a-size-large',
+      'h1 span#productTitle',
+      '#title_feature_div h1',
+      'div#titleSection h1'
+    ];
+
+    for (let selector of titleSelectors) {
+      title = $(selector).first().text().trim();
+      if (title && title.length > 5) {
+        console.log(`✅ Found title with selector: ${selector}`);
+        break;
+      }
     }
-    if (!title) {
-      title = $('span#productTitle').text().trim();
-    }
-    if (!title) {
-      title = 'Unknown Product';
+
+    if (!title || title.length < 5) {
+      // Try to extract from meta tags as last resort
+      title = $('meta[name="title"]').attr('content') || 
+              $('meta[property="og:title"]').attr('content') ||
+              'Unknown Product';
     }
 
     console.log(`✅ Successfully scraped - Price: ${price}, Title: ${title.substring(0, 50)}...`);

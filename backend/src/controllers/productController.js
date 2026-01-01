@@ -206,3 +206,49 @@ exports.getPriceHistory = (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 };
+
+/**
+ * Manually refresh product data (price and name)
+ */
+exports.refreshProduct = async (req, res) => {
+  try {
+    const { userId } = req.auth;
+    const { id } = req.params;
+
+    // Verify product belongs to user
+    const product = db.prepare('SELECT * FROM products WHERE id = ? AND user_id = ?').get(id, userId);
+    
+    if (!product) {
+      return res.status(404).json({ success: false, error: 'Product not found' });
+    }
+
+    // Scrape current data
+    const { price, title } = await scrapeAmazonPrice(product.url);
+    
+    // Update product
+    db.prepare(`
+      UPDATE products 
+      SET current_price = ?, 
+          product_name = ?,
+          last_checked = CURRENT_TIMESTAMP
+      WHERE id = ?
+    `).run(price, title, id);
+
+    // Add to price history
+    db.prepare(`
+      INSERT INTO price_history (product_id, price)
+      VALUES (?, ?)
+    `).run(id, price);
+
+    const updatedProduct = db.prepare('SELECT * FROM products WHERE id = ?').get(id);
+
+    res.json({ 
+      success: true, 
+      product: updatedProduct,
+      message: 'Product refreshed successfully' 
+    });
+  } catch (error) {
+    console.error('❌ refreshProduct error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+};

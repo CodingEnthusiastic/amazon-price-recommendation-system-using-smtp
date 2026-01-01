@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { getProducts, addProduct, deleteProduct, updateProduct } from '../services/api';
-import { FaTrash, FaToggleOn, FaToggleOff, FaPlus, FaExternalLinkAlt } from 'react-icons/fa';
+import { getProducts, addProduct, deleteProduct, updateProduct, refreshProduct } from '../services/api';
+import { FaTrash, FaToggleOn, FaToggleOff, FaPlus, FaExternalLinkAlt, FaSyncAlt } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import './ProductList.css';
 
@@ -71,6 +71,17 @@ function ProductList() {
     }
   };
 
+  const handleRefreshProduct = async (id) => {
+    try {
+      toast.info('Refreshing product data...');
+      await refreshProduct(id);
+      toast.success('Product refreshed successfully!');
+      fetchProducts();
+    } catch (error) {
+      toast.error(error.response?.data?.error || 'Failed to refresh product');
+    }
+  };
+
   if (loading) {
     return <div className="loading">Loading products...</div>;
   }
@@ -136,14 +147,23 @@ function ProductList() {
             {products.map((product) => (
               <div key={product.id} className={`product-card card ${!product.is_active ? 'inactive' : ''}`}>
                 <div className="product-header">
-                  <h3>{product.product_name || 'Loading...'}</h3>
-                  <button
-                    className="toggle-btn"
-                    onClick={() => handleToggleActive(product)}
-                    title={product.is_active ? 'Pause tracking' : 'Resume tracking'}
-                  >
-                    {product.is_active ? <FaToggleOn /> : <FaToggleOff />}
-                  </button>
+                  <h3>{product.product_name || 'Unknown Product'}</h3>
+                  <div className="header-actions">
+                    <button
+                      className="icon-btn"
+                      onClick={() => handleRefreshProduct(product.id)}
+                      title="Refresh product data"
+                    >
+                      <FaSyncAlt />
+                    </button>
+                    <button
+                      className="toggle-btn"
+                      onClick={() => handleToggleActive(product)}
+                      title={product.is_active ? 'Pause tracking' : 'Resume tracking'}
+                    >
+                      {product.is_active ? <FaToggleOn /> : <FaToggleOff />}
+                    </button>
+                  </div>
                 </div>
 
                 <div className="product-prices">
