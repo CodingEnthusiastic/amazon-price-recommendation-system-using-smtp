@@ -1,15 +1,17 @@
-const { db } = require('../models/database');
+const User = require('../models/User');
+const Product = require('../models/Product');
+const PriceHistory = require('../models/PriceHistory');
 const { scrapeAmazonPrice } = require('../services/scraper');
 
 /**
  * Get all products for a user
  */
-exports.getUserProducts = (req, res) => {
+exports.getUserProducts = async (req, res) => {
   try {
     const { userId } = req.auth;
 
     // Verify user exists
-    const user = db.prepare('SELECT * FROM users WHERE clerk_id = ?').get(userId);
+    const user = await User.findOne({ clerk_id: userId });
     if (!user) {
       console.error('❌ User not found for products:', userId);
       return res.status(404).json({ 
@@ -18,11 +20,7 @@ exports.getUserProducts = (req, res) => {
       });
     }
 
-    const products = db.prepare(`
-      SELECT * FROM products 
-      WHERE user_id = ? 
-      ORDER BY created_at DESC
-    `).all(userId);
+    const products = await Product.find({ user_id: userId }).sort({ created_at: -1 });
 
     console.log('📦 Fetched', products.length, 'products for user:', userId);
     res.json({ success: true, products });
@@ -50,7 +48,7 @@ exports.addProduct = async (req, res) => {
       });
     }
 
-    // Validate Amazon URL - Check for valid Amazon domains
+    // Validate Amazon URL
     const amazonDomains = ['amazon.com', 'amazon.in', 'amazon.co.uk', 'amazon.de', 'amazon.fr', 'amazon.ca', 'amazon.co.jp', 'amazon.it', 'amazon.es', 'amazon.com.au'];
     const isValidAmazonUrl = amazonDomains.some(domain => url.toLowerCase().includes(domain));
     
@@ -61,8 +59,8 @@ exports.addProduct = async (req, res) => {
       });
     }
 
-    // Verify user exists in database
-    const user = db.prepare('SELECT * FROM users WHERE clerk_id = ?').get(userId);
+    // Verify user exists
+    const user = await User.findOne({ clerk_id: userId });
     if (!user) {
       console.error('❌ User not found in database:', userId);
       return res.status(400).json({ 
@@ -84,26 +82,22 @@ exports.addProduct = async (req, res) => {
       console.warn('⚠️ Could not fetch initial product data:', error.message);
     }
 
-    // Insert product
-    try {
-      const result = db.prepare(`
-        INSERT INTO products (user_id, url, product_name, target_price, current_price)
-        VALUES (?, ?, ?, ?, ?)
-      `).run(userId, url, productName, targetPrice, currentPrice);
+    // Create product
+    const product = await Product.create({
+      user_id: userId,
+      url,
+      product_name: productName,
+      target_price: targetPrice,
+      current_price: currentPrice
+    });
 
-      const product = db.prepare('SELECT * FROM products WHERE id = ?').get(result.lastInsertRowid);
-      
-      console.log('✅ Product added successfully - ID:', result.lastInsertRowid);
+    console.log('✅ Product added successfully - ID:', product._id);
 
-      res.status(201).json({ 
-        success: true, 
-        product,
-        message: 'Product added successfully' 
-      });
-    } catch (dbError) {
-      console.error('❌ Database insert error:', dbError.message);
-      throw dbError;
-    }
+    res.status(201).json({ 
+      success: true, 
+      product,
+      message: 'Product added successfully' 
+    });
   } catch (error) {
     console.error('❌ addProduct error:', error);
     res.status(500).json({ success: false, error: error.message });
@@ -111,46 +105,32 @@ exports.addProduct = async (req, res) => {
 };
 
 /**
- * Update product target price
+ * Update product
  */
-exports.updateProduct = (req, res) => {
+exports.updateProduct = async (req, res) => {
   try {
     const { userId } = req.auth;
     const { id } = req.params;
     const { targetPrice, isActive } = req.body;
 
     // Verify product belongs to user
-    const product = db.prepare('SELECT * FROM products WHERE id = ? AND user_id = ?').get(id, userId);
+    const product = await Product.findOne({ _id: id, user_id: userId });
     
     if (!product) {
       return res.status(404).json({ success: false, error: 'Product not found' });
     }
 
-    // Update product
-    const updates = [];
-    const values = [];
-
+    // Update fields
     if (targetPrice !== undefined) {
-      updates.push('target_price = ?');
-      values.push(targetPrice);
+      product.target_price = targetPrice;
     }
-
     if (isActive !== undefined) {
-      updates.push('is_active = ?');
-      values.push(isActive ? 1 : 0);
+      product.is_active = isActive;
     }
 
-    if (updates.length === 0) {
-      return res.status(400).json({ success: false, error: 'No updates provided' });
-    }
+    await product.save();
 
-    values.push(id);
-
-    db.prepare(`UPDATE products SET ${updates.join(', ')} WHERE id = ?`).run(...values);
-
-    const updatedProduct = db.prepare('SELECT * FROM products WHERE id = ?').get(id);
-
-    res.json({ success: true, product: updatedProduct });
+    res.json({ success: true, product });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
@@ -159,19 +139,20 @@ exports.updateProduct = (req, res) => {
 /**
  * Delete a product
  */
-exports.deleteProduct = (req, res) => {
+exports.deleteProduct = async (req, res) => {
   try {
     const { userId } = req.auth;
     const { id } = req.params;
 
     // Verify product belongs to user
-    const product = db.prepare('SELECT * FROM products WHERE id = ? AND user_id = ?').get(id, userId);
+    const product = await Product.findOne({ _id: id, user_id: userId });
     
     if (!product) {
       return res.status(404).json({ success: false, error: 'Product not found' });
     }
 
-    db.prepare('DELETE FROM products WHERE id = ?').run(id);
+    await Product.deleteOne({ _id: id });
+    await PriceHistory.deleteMany({ product_id: id });
 
     res.json({ success: true, message: 'Product deleted successfully' });
   } catch (error) {
@@ -182,24 +163,21 @@ exports.deleteProduct = (req, res) => {
 /**
  * Get price history for a product
  */
-exports.getPriceHistory = (req, res) => {
+exports.getPriceHistory = async (req, res) => {
   try {
     const { userId } = req.auth;
     const { id } = req.params;
 
     // Verify product belongs to user
-    const product = db.prepare('SELECT * FROM products WHERE id = ? AND user_id = ?').get(id, userId);
+    const product = await Product.findOne({ _id: id, user_id: userId });
     
     if (!product) {
       return res.status(404).json({ success: false, error: 'Product not found' });
     }
 
-    const history = db.prepare(`
-      SELECT * FROM price_history 
-      WHERE product_id = ? 
-      ORDER BY checked_at DESC
-      LIMIT 30
-    `).all(id);
+    const history = await PriceHistory.find({ product_id: id })
+      .sort({ checked_at: -1 })
+      .limit(30);
 
     res.json({ success: true, history });
   } catch (error) {
@@ -216,7 +194,7 @@ exports.refreshProduct = async (req, res) => {
     const { id } = req.params;
 
     // Verify product belongs to user
-    const product = db.prepare('SELECT * FROM products WHERE id = ? AND user_id = ?').get(id, userId);
+    const product = await Product.findOne({ _id: id, user_id: userId });
     
     if (!product) {
       return res.status(404).json({ success: false, error: 'Product not found' });
@@ -226,25 +204,20 @@ exports.refreshProduct = async (req, res) => {
     const { price, title } = await scrapeAmazonPrice(product.url);
     
     // Update product
-    db.prepare(`
-      UPDATE products 
-      SET current_price = ?, 
-          product_name = ?,
-          last_checked = CURRENT_TIMESTAMP
-      WHERE id = ?
-    `).run(price, title, id);
+    product.current_price = price;
+    product.product_name = title;
+    product.last_checked = new Date();
+    await product.save();
 
     // Add to price history
-    db.prepare(`
-      INSERT INTO price_history (product_id, price)
-      VALUES (?, ?)
-    `).run(id, price);
-
-    const updatedProduct = db.prepare('SELECT * FROM products WHERE id = ?').get(id);
+    await PriceHistory.create({
+      product_id: id,
+      price
+    });
 
     res.json({ 
       success: true, 
-      product: updatedProduct,
+      product,
       message: 'Product refreshed successfully' 
     });
   } catch (error) {

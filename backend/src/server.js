@@ -3,7 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
-const { initDatabase } = require('./models/database');
+const { connectDB } = require('./config/database');
 const { initScheduler } = require('./services/scheduler');
 
 const app = express();
@@ -31,9 +31,6 @@ app.use('/api/', limiter);
 // Body parser
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
-// Initialize database
-initDatabase();
 
 // Routes
 app.use('/api/users', require('./routes/users'));
@@ -75,17 +72,30 @@ app.use((req, res) => {
   res.status(404).json({ success: false, error: 'Route not found' });
 });
 
-// Start server
-app.listen(PORT, () => {
-  console.log('\n' + '='.repeat(60));
-  console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`📍 API URL: http://localhost:${PORT}`);
-  console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log('='.repeat(60) + '\n');
+// Start server and connect to MongoDB
+const startServer = async () => {
+  try {
+    // Connect to MongoDB
+    await connectDB();
 
-  // Initialize scheduler
-  initScheduler();
-});
+    // Start Express server
+    app.listen(PORT, () => {
+      console.log('\n' + '='.repeat(60));
+      console.log(`🚀 Server running on port ${PORT}`);
+      console.log(`📍 API URL: http://localhost:${PORT}`);
+      console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+      console.log('='.repeat(60) + '\n');
+
+      // Initialize scheduler
+      initScheduler();
+    });
+  } catch (error) {
+    console.error('❌ Failed to start server:', error);
+    process.exit(1);
+  }
+};
+
+startServer();
 
 // Graceful shutdown
 process.on('SIGTERM', () => {

@@ -1,4 +1,6 @@
-const { db } = require('../models/database');
+const User = require('../models/User');
+const Product = require('../models/Product');
+const Notification = require('../models/Notification');
 const { clerkClient } = require('@clerk/clerk-sdk-node');
 
 /**
@@ -22,7 +24,6 @@ exports.syncUser = async (req, res) => {
       console.log('✅ Fetched email from Clerk:', email);
     } catch (clerkError) {
       console.error('❌ Failed to fetch user from Clerk:', clerkError.message);
-      // Fallback - this should rarely happen
       email = `user_${userId}@clerk.dev`;
     }
 
@@ -35,36 +36,24 @@ exports.syncUser = async (req, res) => {
 
     console.log('📧 User email:', email);
 
-    // Check if user exists
-    let user = db.prepare('SELECT * FROM users WHERE clerk_id = ?').get(userId);
+    // Find or create user
+    let user = await User.findOne({ clerk_id: userId });
 
     if (!user) {
-      // Create new user - id and clerk_id are the same
-      try {
-        db.prepare(`
-          INSERT INTO users (id, email, clerk_id)
-          VALUES (?, ?, ?)
-        `).run(userId, email, userId);
-
-        user = db.prepare('SELECT * FROM users WHERE clerk_id = ?').get(userId);
-        console.log('✅ New user synced:', email);
-      } catch (insertError) {
-        console.error('❌ User insert error:', insertError.message);
-        // Try to get user again in case of race condition
-        user = db.prepare('SELECT * FROM users WHERE clerk_id = ?').get(userId);
-        if (!user) {
-          throw insertError;
-        }
-      }
+      user = await User.create({
+        email,
+        clerk_id: userId
+      });
+      console.log('✅ New user synced:', email);
     } else {
       // Update email if it changed
       if (user.email !== email) {
-        db.prepare('UPDATE users SET email = ? WHERE clerk_id = ?').run(email, userId);
-        console.log('✅ User email updated from', user.email, 'to', email);
+        user.email = email;
+        await user.save();
+        console.log('✅ User email updated to', email);
       } else {
         console.log('✅ Existing user found:', email);
       }
-      user = db.prepare('SELECT * FROM users WHERE clerk_id = ?').get(userId);
     }
 
     res.json({ success: true, user });
@@ -77,12 +66,12 @@ exports.syncUser = async (req, res) => {
 /**
  * Get user dashboard stats
  */
-exports.getUserStats = (req, res) => {
+exports.getUserStats = async (req, res) => {
   try {
     const { userId } = req.auth;
 
     // Verify user exists
-    const user = db.prepare('SELECT * FROM users WHERE clerk_id = ?').get(userId);
+    const user = await User.findOne({ clerk_id: userId });
     if (!user) {
       console.error('❌ User not found for stats:', userId);
       return res.status(404).json({ 
@@ -92,10 +81,13 @@ exports.getUserStats = (req, res) => {
     }
 
     const stats = {
-      totalProducts: db.prepare('SELECT COUNT(*) as count FROM products WHERE user_id = ?').get(userId).count,
-      activeProducts: db.prepare('SELECT COUNT(*) as count FROM products WHERE user_id = ? AND is_active = 1').get(userId).count,
-      dealsFound: db.prepare('SELECT COUNT(*) as count FROM products WHERE user_id = ? AND current_price < target_price').get(userId).count,
-      totalNotifications: db.prepare('SELECT COUNT(*) as count FROM notifications WHERE user_id = ?').get(userId).count,
+      totalProducts: await Product.countDocuments({ user_id: userId }),
+      activeProducts: await Product.countDocuments({ user_id: userId, is_active: true }),
+      dealsFound: await Product.countDocuments({ 
+        user_id: userId, 
+        $expr: { $lt: ['$current_price', '$target_price'] }
+      }),
+      totalNotifications: await Notification.countDocuments({ user_id: userId }),
     };
 
     console.log('📊 Stats fetched for user:', userId);

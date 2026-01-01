@@ -11,6 +11,8 @@ services:
         value: production
       - key: PORT
         value: 5000
+      - key: MONGODB_URI
+        sync: false
       - key: CLERK_SECRET_KEY
         sync: false
       - key: CLERK_PUBLISHABLE_KEY
@@ -25,7 +27,3 @@ services:
         sync: false
       - key: SMTP_PASSWORD
         sync: false
-    disk:
-      name: database-disk
-      mountPath: /opt/render/project/.data
-      sizeGB: 1
