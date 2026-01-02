@@ -12,53 +12,95 @@ An automated Python bot that monitors Amazon product prices and sends email aler
 
 ## Setup Instructions 🚀
 
-### 1. Install Dependencies
+### 1. Prerequisites
+- Node.js (v16 or higher)
+- MongoDB Atlas account (Cloud) or local MongoDB installation
+- Gmail account with App Password for email notifications
+
+### 2. Backend Setup
 
 ```bash
-python -m pip install -r requirements.txt
+cd backend
+
+# Install dependencies
+npm install
+
+# Configure environment variables
+cp .env.example .env
+# Edit .env with your credentials:
+# - CLERK_SECRET_KEY (from Clerk.com)
+# - MONGODB_URI (from MongoDB Atlas)
+# - SMTP credentials (Gmail App Password)
+# - FRONTEND_URL
+
+# Initialize database
+npm run init-db
+
+# Development mode (auto-reload on file changes)
+npm run dev
+
+# Production mode
+npm start
 ```
 
-### 2. Configure Environment Variables
-
-Update the `.env` file with your email settings:
-
-```
-SMTP_ADDRESS=smtp.gmail.com
-EMAIL_ADDRESS=your-email@gmail.com
-EMAIL_PASSWORD=your-app-password
-```
-
-**For Gmail users**: You need to generate an [App Password](https://myaccount.google.com/apppasswords) instead of using your regular password.
-
-### 3. Add Products to Track
-
-Edit `main.py` and add products to the `PRODUCTS` list:
-
-```python
-PRODUCTS = [
-    {
-        "name": "Product Name",
-        "url": "https://www.amazon.com/dp/PRODUCT_ID",
-        "target_price": 5000  # Price in your currency
-    },
-    {
-        "name": "Another Product",
-        "url": "https://www.amazon.com/dp/ANOTHER_ID",
-        "target_price": 3000
-    },
-]
-```
-
-### 4. Run the Bot
+### 3. Frontend Setup
 
 ```bash
-python main.py
+cd frontend
+
+# Install dependencies
+npm install
+
+# Development mode (Vite dev server on http://localhost:3000)
+npm run dev
+
+# Production build
+npm run build
 ```
 
-The bot will:
-1. Check all product prices immediately
-2. Send email if any deals are found
-3. Wait 24 hours and repeat automatically
+### 4. Environment Variables
+
+**Backend (.env)**
+```
+PORT=5000
+NODE_ENV=development
+CLERK_SECRET_KEY=sk_test_...
+MONGODB_URI=mongodb+srv://user:pass@cluster.mongodb.net/amazon-tracker
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=your-email@gmail.com
+SMTP_PASSWORD=your-app-password
+FRONTEND_URL=http://localhost:3000
+```
+
+**Frontend Setup**
+- Create account via Clerk authentication on the app
+- Add Amazon product URLs through the dashboard UI
+
+### 5. Adding Products to Track
+
+1. Log in to the web dashboard
+2. Click "Add Product"
+3. Enter Amazon product URL and target price (in INR)
+4. System automatically scrapes current price and title
+5. Price checks run daily at 10:00 AM
+6. Email alerts sent when deals are found
+
+### 6. Running the Application
+
+**In separate terminals:**
+
+```bash
+# Terminal 1 - Backend API
+cd backend
+npm run dev
+
+# Terminal 2 - Frontend UI
+cd frontend
+npm run dev
+```
+
+The application will be available at `http://localhost:3000`
 
 ## How It Works 🔧
 

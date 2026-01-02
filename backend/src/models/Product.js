@@ -22,6 +22,11 @@ const productSchema = new mongoose.Schema({
     type: Number,
     default: null
   },
+  currency: {
+    type: String,
+    enum: ['INR', 'USD', 'UNKNOWN'],
+    default: 'INR'
+  },
   last_checked: {
     type: Date,
     default: null

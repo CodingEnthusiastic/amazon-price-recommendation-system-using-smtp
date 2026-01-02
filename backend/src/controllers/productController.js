@@ -72,12 +72,14 @@ exports.addProduct = async (req, res) => {
     // Try to scrape initial price and title
     let productName = 'Unknown Product';
     let currentPrice = null;
+    let currency = 'INR';
 
     try {
-      const { price, title } = await scrapeAmazonPrice(url);
+      const { price, title, currency: scrapedCurrency } = await scrapeAmazonPrice(url);
       productName = title;
       currentPrice = price;
-      console.log('✅ Scraped product:', title.substring(0, 50), '- Price:', price);
+      currency = scrapedCurrency || 'INR';
+      console.log('✅ Scraped product:', title.substring(0, 50), '- Price:', price, '- Currency:', currency);
     } catch (error) {
       console.warn('⚠️ Could not fetch initial product data:', error.message);
     }
@@ -88,7 +90,8 @@ exports.addProduct = async (req, res) => {
       url,
       product_name: productName,
       target_price: targetPrice,
-      current_price: currentPrice
+      current_price: currentPrice,
+      currency
     });
 
     console.log('✅ Product added successfully - ID:', product._id);
@@ -201,11 +204,12 @@ exports.refreshProduct = async (req, res) => {
     }
 
     // Scrape current data
-    const { price, title } = await scrapeAmazonPrice(product.url);
+    const { price, title, currency: scrapedCurrency } = await scrapeAmazonPrice(product.url);
     
     // Update product
     product.current_price = price;
     product.product_name = title;
+    product.currency = scrapedCurrency || 'INR';
     product.last_checked = new Date();
     await product.save();
 

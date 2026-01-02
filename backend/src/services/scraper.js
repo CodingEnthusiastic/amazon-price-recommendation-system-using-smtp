@@ -1,10 +1,13 @@
 const axios = require('axios');
 const cheerio = require('cheerio');
 
+// Current USD to INR conversion rate (can be updated)
+const USD_TO_INR_RATE = 83.15;
+
 /**
  * Scrape Amazon product price using Cheerio (lightweight alternative to Puppeteer)
  * @param {string} url - Amazon product URL
- * @returns {Promise<{price: number, title: string}>}
+ * @returns {Promise<{price: number, title: string, currency: string}>}
  */
 async function scrapeAmazonPrice(url) {
   try {
@@ -65,16 +68,25 @@ async function scrapeAmazonPrice(url) {
       throw new Error('Price element not found. Amazon may be blocking or product unavailable.');
     }
 
+    // Detect currency
+    const detectedCurrency = priceText.includes('₹') ? 'INR' : priceText.includes('$') ? 'USD' : 'UNKNOWN';
+
     // Extract numeric price - handle different formats
     const priceMatch = priceText.match(/[\d,]+\.?\d*/);
     if (!priceMatch) {
       throw new Error('Could not parse price from text: ' + priceText);
     }
 
-    const price = parseFloat(priceMatch[0].replace(/,/g, ''));
+    let price = parseFloat(priceMatch[0].replace(/,/g, ''));
 
     if (isNaN(price) || price <= 0) {
       throw new Error('Invalid price value: ' + price);
+    }
+
+    // Convert USD to INR if needed
+    if (detectedCurrency === 'USD') {
+      price = Math.round(price * USD_TO_INR_RATE * 100) / 100; // Round to 2 decimal places
+      console.log(`💱 Converted USD price to INR: ${price}`);
     }
 
     // Extract title with multiple fallbacks
@@ -104,12 +116,12 @@ async function scrapeAmazonPrice(url) {
               'Unknown Product';
     }
 
-    console.log(`✅ Successfully scraped - Price: ${price}, Title: ${title.substring(0, 50)}...`);
+    console.log(`✅ Successfully scraped - Price: ₹${price} (converted to INR), Title: ${title.substring(0, 50)}...`);
 
     return {
       price,
       title,
-      currency: priceText.includes('₹') ? 'INR' : priceText.includes('$') ? 'USD' : 'UNKNOWN'
+      currency: 'INR' // Always return INR since we convert USD to INR
     };
 
   } catch (error) {
@@ -128,5 +140,6 @@ function delay(ms) {
 
 module.exports = {
   scrapeAmazonPrice,
-  delay
+  delay,
+  USD_TO_INR_RATE
 };

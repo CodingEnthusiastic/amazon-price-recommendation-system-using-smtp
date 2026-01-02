@@ -49,12 +49,13 @@ async function checkAllPrices() {
       try {
         const { price, title } = await scrapeAmazonPrice(product.url);
         
-        // Update product
+        // Update product - price is now in INR from scraper
         await Product.updateOne(
           { _id: product._id },
           {
             current_price: price,
             product_name: title,
+            currency: 'INR',
             last_checked: new Date()
           }
         );
