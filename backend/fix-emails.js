@@ -9,11 +9,11 @@ async function fixUserEmails() {
   try {
     // Get all users
     const users = db.prepare('SELECT * FROM users').all();
-    console.log(`Found ${users.length} users to check\n`);
+    // console.log(`Found ${users.length} users to check\n`);
     
     for (const user of users) {
-      console.log(`Checking user: ${user.clerk_id}`);
-      console.log(`  Current email: ${user.email}`);
+      // console.log(`Checking user: ${user.clerk_id}`);
+      // console.log(`  Current email: ${user.email}`);
       
       try {
         // Fetch real email from Clerk
@@ -23,7 +23,7 @@ async function fixUserEmails() {
         const realEmail = primaryEmail?.emailAddress || clerkUser.emailAddresses[0]?.emailAddress;
         
         if (realEmail) {
-          console.log(`  📧 Real email from Clerk: ${realEmail}`);
+          // console.log(`  📧 Real email from Clerk: ${realEmail}`);
           
           if (user.email !== realEmail) {
             // Update database
@@ -36,7 +36,7 @@ async function fixUserEmails() {
           console.log(`  ⚠️ No email found in Clerk\n`);
         }
       } catch (error) {
-        console.error(`  ❌ Error fetching Clerk user: ${error.message}\n`);
+        // console.error(`  ❌ Error fetching Clerk user: ${error.message}\n`);
       }
     }
     
@@ -45,10 +45,10 @@ async function fixUserEmails() {
     // Show updated users
     console.log('\n📋 Updated user list:');
     const updatedUsers = db.prepare('SELECT clerk_id, email FROM users').all();
-    updatedUsers.forEach(u => console.log(`  ${u.clerk_id}: ${u.email}`));
+    // updatedUsers.forEach(u => console.log(`  ${u.clerk_id}: ${u.email}`));
     
   } catch (error) {
-    console.error('❌ Fix failed:', error.message);
+    // console.error('❌ Fix failed:', error.message);
   }
 }
 

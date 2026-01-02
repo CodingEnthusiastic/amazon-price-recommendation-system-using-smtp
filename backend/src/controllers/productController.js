@@ -62,7 +62,7 @@ exports.addProduct = async (req, res) => {
     // Verify user exists
     const user = await User.findOne({ clerk_id: userId });
     if (!user) {
-      console.error('❌ User not found in database:', userId);
+      // console.error('❌ User not found in database:', userId);
       return res.status(400).json({ 
         success: false, 
         error: 'User not found. Please refresh the page and try again.' 
@@ -79,9 +79,9 @@ exports.addProduct = async (req, res) => {
       productName = title;
       currentPrice = price;
       currency = scrapedCurrency || 'INR';
-      console.log('✅ Scraped product:', title.substring(0, 50), '- Price:', price, '- Currency:', currency);
+      // console.log('✅ Scraped product:', title.substring(0, 50), '- Price:', price, '- Currency:', currency);
     } catch (error) {
-      console.warn('⚠️ Could not fetch initial product data:', error.message);
+      // console.warn('⚠️ Could not fetch initial product data:', error.message);
     }
 
     // Create product
@@ -94,7 +94,7 @@ exports.addProduct = async (req, res) => {
       currency
     });
 
-    console.log('✅ Product added successfully - ID:', product._id);
+    // console.log('✅ Product added successfully - ID:', product._id);
 
     res.status(201).json({ 
       success: true, 
@@ -102,7 +102,7 @@ exports.addProduct = async (req, res) => {
       message: 'Product added successfully' 
     });
   } catch (error) {
-    console.error('❌ addProduct error:', error);
+    // console.error('❌ addProduct error:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 };
@@ -225,7 +225,7 @@ exports.refreshProduct = async (req, res) => {
       message: 'Product refreshed successfully' 
     });
   } catch (error) {
-    console.error('❌ refreshProduct error:', error);
+    // console.error('❌ refreshProduct error:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 };

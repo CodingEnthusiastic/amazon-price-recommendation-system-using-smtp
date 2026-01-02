@@ -69,10 +69,10 @@ async function sendPriceAlert(userEmail, deals) {
       html: htmlContent,
     });
 
-    console.log('✅ Email sent:', info.messageId);
+    // console.log('✅ Email sent:', info.messageId);
     return true;
   } catch (error) {
-    console.error('❌ Email sending failed:', error.message);
+    // console.error('❌ Email sending failed:', error.message);
     throw error;
   }
 }

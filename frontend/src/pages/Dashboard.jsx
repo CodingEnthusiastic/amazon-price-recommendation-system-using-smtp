@@ -16,12 +16,12 @@ function Dashboard() {
 
   const fetchStats = async () => {
     try {
-      console.log('📊 Fetching dashboard stats...');
+      // console.log('📊 Fetching dashboard stats...');
       const response = await getUserStats();
       setStats(response.data.stats);
-      console.log('✅ Stats loaded');
+      // console.log('✅ Stats loaded');
     } catch (error) {
-      console.error('❌ Failed to load stats:', error.message);
+      // console.error('❌ Failed to load stats:', error.message);
       toast.error('Failed to load dashboard stats');
     } finally {
       setLoading(false);

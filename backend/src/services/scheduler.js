@@ -44,7 +44,7 @@ async function checkAllPrices() {
 
     // Check each product
     for (const product of products) {
-      console.log(`Checking: ${product.product_name || product.url}`);
+      // console.log(`Checking: ${product.product_name || product.url}`);
       
       try {
         const { price, title } = await scrapeAmazonPrice(product.url);
@@ -89,9 +89,9 @@ async function checkAllPrices() {
       if (deals.length > 0) {
         try {
           await sendPriceAlert(userEmail, deals);
-          console.log(`✅ Alert sent to ${userEmail} for ${deals.length} deal(s)`);
+          // console.log(`✅ Alert sent to ${userEmail} for ${deals.length} deal(s)`);
         } catch (emailError) {
-          console.error(`❌ Failed to send email to ${userEmail}:`, emailError.message);
+          // console.error(`❌ Failed to send email to ${userEmail}:`, emailError.message);
         }
       }
     }
