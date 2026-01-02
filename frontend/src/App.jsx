@@ -18,34 +18,34 @@ function App() {
       if (isLoaded) {
         if (isSignedIn) {
           try {
-            console.log('🔑 Fetching authentication token...');
+            // console.log('🔑 Fetching authentication token...');
             // Get token and set it
             const token = await getToken();
             
             if (!token) {
-              console.error('❌ No token received from Clerk');
+              // console.error('❌ No token received from Clerk');
               setAuthReady(true);
               return;
             }
             
-            console.log('✅ Token received, setting in API client...');
+            // console.log('✅ Token received, setting in API client...');
             setAuthToken(token);
             
             // Small delay to ensure token is set
             await new Promise(resolve => setTimeout(resolve, 100));
             
             // Sync user to backend database
-            console.log('🔄 Syncing user to database...');
+            // console.log('🔄 Syncing user to database...');
             await syncUser();
-            console.log('✅ User synced successfully');
+            // console.log('✅ User synced successfully');
             
             setAuthReady(true);
           } catch (error) {
-            console.error('❌ Auth setup error:', error.message);
+            // console.error('❌ Auth setup error:', error.message);
             setAuthReady(true); // Allow navigation even if sync fails
           }
         } else {
-          console.log('🚪 Not signed in');
+          // console.log('🚪 Not signed in');
           setAuthToken(null);
           setAuthReady(true);
         }

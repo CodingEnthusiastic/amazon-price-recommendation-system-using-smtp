@@ -27,9 +27,9 @@ api.interceptors.request.use(
   (config) => {
     if (authToken) {
       config.headers['Authorization'] = `Bearer ${authToken}`;
-      console.log(`📤 ${config.method.toUpperCase()} ${config.url} - Token: ${authToken.substring(0, 20)}...`);
+      // console.log(`📤 ${config.method.toUpperCase()} ${config.url} - Token: ${authToken.substring(0, 20)}...`);
     } else {
-      console.warn(`⚠️ ${config.method.toUpperCase()} ${config.url} - NO TOKEN SET`);
+      // console.warn(`⚠️ ${config.method.toUpperCase()} ${config.url} - NO TOKEN SET`);
     }
     return config;
   },
@@ -41,15 +41,15 @@ api.interceptors.request.use(
 // Response interceptor for better error handling
 api.interceptors.response.use(
   (response) => {
-    console.log(`✅ ${response.config.method.toUpperCase()} ${response.config.url} - ${response.status}`);
+    // console.log(`✅ ${response.config.method.toUpperCase()} ${response.config.url} - ${response.status}`);
     return response;
   },
   (error) => {
     if (error.response?.status === 401) {
-      console.error(`❌ 401 Unauthorized: ${error.config.method.toUpperCase()} ${error.config.url}`);
-      console.error('   Token present:', error.config.headers.Authorization ? 'Yes' : 'No');
+      // console.error(`❌ 401 Unauthorized: ${error.config.method.toUpperCase()} ${error.config.url}`);
+      // console.error('   Token present:', error.config.headers.Authorization ? 'Yes' : 'No');
     } else {
-      console.error(`❌ ${error.response?.status || 'Network'} Error: ${error.config?.method?.toUpperCase()} ${error.config?.url}`);
+      // console.error(`❌ ${error.response?.status || 'Network'} Error: ${error.config?.method?.toUpperCase()} ${error.config?.url}`);
     }
     return Promise.reject(error);
   }

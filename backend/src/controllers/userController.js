@@ -10,7 +10,7 @@ exports.syncUser = async (req, res) => {
   try {
     const { userId } = req.auth;
     
-    console.log('🔍 Syncing user - ID:', userId);
+    // console.log('🔍 Syncing user - ID:', userId);
     
     // Fetch user details from Clerk to get actual email
     let email;
@@ -21,9 +21,9 @@ exports.syncUser = async (req, res) => {
       const primaryEmail = clerkUser.emailAddresses.find(e => e.id === clerkUser.primaryEmailAddressId);
       email = primaryEmail?.emailAddress || clerkUser.emailAddresses[0]?.emailAddress;
       
-      console.log('✅ Fetched email from Clerk:', email);
+      // console.log('✅ Fetched email from Clerk:', email);
     } catch (clerkError) {
-      console.error('❌ Failed to fetch user from Clerk:', clerkError.message);
+      // console.error('❌ Failed to fetch user from Clerk:', clerkError.message);
       email = `user_${userId}@clerk.dev`;
     }
 
@@ -34,7 +34,7 @@ exports.syncUser = async (req, res) => {
       });
     }
 
-    console.log('📧 User email:', email);
+    // console.log('📧 User email:', email);
 
     // Find or create user
     let user = await User.findOne({ clerk_id: userId });
@@ -44,21 +44,21 @@ exports.syncUser = async (req, res) => {
         email,
         clerk_id: userId
       });
-      console.log('✅ New user synced:', email);
+      // console.log('✅ New user synced:', email);
     } else {
       // Update email if it changed
       if (user.email !== email) {
         user.email = email;
         await user.save();
-        console.log('✅ User email updated to', email);
+        // console.log('✅ User email updated to', email);
       } else {
-        console.log('✅ Existing user found:', email);
+        // console.log('✅ Existing user found:', email);
       }
     }
 
     res.json({ success: true, user });
   } catch (error) {
-    console.error('❌ syncUser error:', error);
+    // console.error('❌ syncUser error:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 };
@@ -73,7 +73,7 @@ exports.getUserStats = async (req, res) => {
     // Verify user exists
     const user = await User.findOne({ clerk_id: userId });
     if (!user) {
-      console.error('❌ User not found for stats:', userId);
+      // console.error('❌ User not found for stats:', userId);
       return res.status(404).json({ 
         success: false, 
         error: 'User not found. Please refresh and try again.' 
@@ -90,10 +90,10 @@ exports.getUserStats = async (req, res) => {
       totalNotifications: await Notification.countDocuments({ user_id: userId }),
     };
 
-    console.log('📊 Stats fetched for user:', userId);
+    // console.log('📊 Stats fetched for user:', userId);
     res.json({ success: true, stats });
   } catch (error) {
-    console.error('❌ getUserStats error:', error);
+    // console.error('❌ getUserStats error:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 };

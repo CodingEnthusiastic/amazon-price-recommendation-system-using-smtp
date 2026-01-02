@@ -81,7 +81,7 @@ const startServer = async () => {
     // Start Express server
     app.listen(PORT, () => {
       console.log('\n' + '='.repeat(60));
-      console.log(`🚀 Server running on port ${PORT}`);
+      // console.log(`🚀 Server running on port ${PORT}`);
       console.log(`📍 API URL: http://localhost:${PORT}`);
       console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
       console.log('='.repeat(60) + '\n');

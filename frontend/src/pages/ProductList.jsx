@@ -16,12 +16,12 @@ function ProductList() {
 
   const fetchProducts = async () => {
     try {
-      console.log('📦 Fetching products...');
+      // console.log('📦 Fetching products...');
       const response = await getProducts();
       setProducts(response.data.products);
-      console.log('✅ Products loaded:', response.data.products.length);
+      // console.log('✅ Products loaded:', response.data.products.length);
     } catch (error) {
-      console.error('❌ Failed to load products:', error.message);
+      // console.error('❌ Failed to load products:', error.message);
       toast.error('Failed to load products');
     } finally {
       setLoading(false);
