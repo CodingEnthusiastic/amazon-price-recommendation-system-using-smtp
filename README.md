@@ -1,5 +1,5 @@
 # Amazon Price Tracker Bot 🤖
-
+<img width="1918" height="953" alt="image" src="https://github.com/user-attachments/assets/ed9f3eb5-eddf-4e05-bdeb-5af939032f6e" />
 An automated Python bot that monitors Amazon product prices and sends email alerts when prices drop below your target.
 
 ## Features ✨
